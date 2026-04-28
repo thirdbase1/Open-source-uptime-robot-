@@ -1,10 +1,9 @@
 {
   "name": "telegram-video-bot",
   "version": "1.0.0",
-  "description": "Telegram bot for downloading videos via Vercel Sandbox",
-  "main": "bot_template.js",
+  "description": "Telegram bot for downloading videos via API only",
+  "main": "bot.js",
   "dependencies": {
-    "grammy": "^1.34.0",
-    "@vercel/sandbox": "^0.1.0"
+    "grammy": "^1.34.0"
   }
 }
