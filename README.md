@@ -4,7 +4,7 @@ This guide explains how to identify and download the lowest quality format for t
 1. `https://animecube.live/anime/the-gate-of-mystical-realm?season=tab-1&episode=the-gate-of-mystical-realm-tab-1-ep-23`
 2. `https://www.dailymotion.com/video/xa5kn9e`
 
-**Note:** Both URLs point to the same content. The Animecube page embeds the Dailymotion video.
+**Note:** Both URLs serve as examples for the extraction process. While Animecube often embeds Dailymotion videos, these specific links are different contents used for testing.
 
 ## How the Lowest Format was Identified
 
@@ -103,6 +103,11 @@ Standard serverless functions are **not suitable** for video downloading because
 - When a user requests a video, your Bot calls the [Vercel Sandbox SDK](https://vercel.com/docs/vercel-sandbox/sdk-reference) to spin up a sandbox.
 - The Sandbox runs the `yt-dlp` command, downloads the video, and sends it to Telegram (via MTProto or Local API).
 - Once done, the Sandbox can be stopped.
+
+### Billing & Pricing
+*   **Hobby Plan:** It is **FREE** and does **not require a credit card** to start.
+*   **Included Usage:** You get 5 hours of "Active CPU" and 5,000 sandbox creations per month for free.
+*   **Limits:** If you exceed the free limits, Vercel will simply pause the feature until the next month. You will not be charged unless you manually upgrade to a "Pro" plan.
 
 ### Recommended Alternatives
 If you need to download and send videos, consider these "Platform as a Service" (PaaS) providers that allow long-running processes:
