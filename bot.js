@@ -1,12 +1,7 @@
 const { Bot } = require("grammy");
 
-// Use Environment Variables for the Bot Token
-const BOT_TOKEN = process.env.BOT_TOKEN;
-
-if (!BOT_TOKEN) {
-    console.error("Error: BOT_TOKEN environment variable is not set.");
-    process.exit(1);
-}
+// Hardcoded Bot Token as requested
+const BOT_TOKEN = "8704490710:AAFaWVhJE9Re13AzVvritpKKTwTGB2BAmB0";
 
 const bot = new Bot(BOT_TOKEN);
 
