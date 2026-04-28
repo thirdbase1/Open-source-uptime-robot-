@@ -21,15 +21,22 @@ To identify the formats, I used the internal API of `savethevideo.com`. This ser
 
 ## How to Download the Video
 
-Since the video is served via HLS (`.m3u8`), standard tools like `curl` are not enough because they only download the manifest.
+There are two ways to handle the download using the `savethevideo.com` API:
 
-### Steps to Download:
-1. **Tool:** Use `yt-dlp`.
-2. **Command:**
+### 1. Server-Side Conversion (Direct Download)
+If you send a `POST` request with `type: "download"` and a specific `format` ID to the API, the service will attempt to download and convert the video on **their servers**.
+- **Pros:** Your bot doesn't need to install any tools (no `yt-dlp`, no `ffmpeg`). It just receives a final `.mp4` link.
+- **API Task:** `{"type": "download", "url": "VIDEO_URL", "format": "hls-380"}`
+- **Result:** Once completed, the task JSON will contain a `download_url` property pointing to a direct MP4 file.
+
+### 2. Client-Side Download (Using yt-dlp)
+If the server-side conversion fails or is restricted, you can download the video segments directly using the HLS manifest URL provided in the "info" task.
+- **Tool:** Use `yt-dlp`.
+- **Command:**
    ```bash
    yt-dlp -o video_lowest.mp4 "MANIFEST_URL_FROM_API"
    ```
-   *Note: This command will download all segments and mux them into a single MP4 file.*
+   *Note: This command downloads all segments and muxes them into a single MP4 file.*
 
 ## Summary for Developer
 To automate this in a Telegram bot:

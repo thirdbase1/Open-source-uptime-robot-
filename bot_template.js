@@ -14,9 +14,7 @@ const bot = new Bot(process.env.BOT_TOKEN);
 bot.command("start", (ctx) => ctx.reply("Send me a Dailymotion or Animecube link to download the lowest quality format!"));
 
 bot.on("message:text", async (ctx) => {
-    // Sanitize input to prevent injection
-    const rawUrl = ctx.message.text.trim();
-    const url = rawUrl.replace(/['"`]/g, "");
+    const url = ctx.message.text.trim();
 
     if (!url.includes("dailymotion.com") && !url.includes("animecube.live")) {
         return ctx.reply("Please send a valid Dailymotion or Animecube link.");
@@ -30,61 +28,83 @@ bot.on("message:text", async (ctx) => {
         });
 
         // 1. Create the download script file in the sandbox
-        // We use JSON.stringify to safely embed the URL into the script
         await sandbox.writeFile("download.js", `
-            const { execSync } = require('child_process');
-
             async function run() {
                 const url = ${JSON.stringify(url)};
-                console.log("Starting extraction for " + url);
 
-                const apiRes = await fetch("https://api.v02.savethevideo.com/tasks", {
+                // Step A: Request video info to find the lowest format
+                const infoRes = await fetch("https://api.v02.savethevideo.com/tasks", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ type: "info", url: url })
                 });
-                const { id } = await apiRes.json();
+                const infoData = await infoRes.json();
 
-                let result;
+                let infoResult;
                 while(true) {
                     await new Promise(r => setTimeout(r, 2000));
-                    const poll = await fetch("https://api.v02.savethevideo.com/tasks/" + id);
+                    const poll = await fetch("https://api.v02.savethevideo.com/tasks/" + infoData.id);
                     const data = await poll.json();
-                    if (data.state === "completed") {
-                        result = data.result;
-                        break;
-                    }
+                    if (data.state === "completed") { infoResult = data.result; break; }
+                    if (data.state === "failed") throw new Error("Info extraction failed");
                 }
 
-                const lowest = result.formats
-                    .filter(f => f.url)
-                    .reduce((p, c) => ((c.width||0)*(c.height||0) < (p.width||0)*(p.height||0)) ? c : p);
+                // Dynamically find the lowest format
+                const lowest = infoResult.formats
+                    .filter(f => f.url || f.format_id)
+                    .reduce((p, c) => ((c.width||9999)*(c.height||9999) < (p.width||9999)*(p.height||9999)) ? c : p);
 
-                console.log("Downloading lowest format: " + lowest.url);
+                console.log("Found lowest format: " + lowest.format_id);
 
-                // Install yt-dlp binary
-                execSync("curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o yt-dlp && chmod a+rx yt-dlp");
+                // Step B: Request a server-side conversion for a direct MP4 download link
+                const dlRes = await fetch("https://api.v02.savethevideo.com/tasks", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        type: "download",
+                        url: url,
+                        format: lowest.format_id
+                    })
+                });
+                const dlData = await dlRes.json();
 
-                // Download the video
-                execSync("./yt-dlp -o video.mp4 '" + lowest.url + "'");
+                let dlResult;
+                while(true) {
+                    await new Promise(r => setTimeout(r, 2000));
+                    const poll = await fetch("https://api.v02.savethevideo.com/tasks/" + dlData.id);
+                    const data = await poll.json();
+                    if (data.state === "completed") { dlResult = data.result; break; }
+                    if (data.state === "failed") throw new Error("Conversion failed");
+                }
 
-                console.log("Download complete. File is ready at video.mp4");
-                // TODO: Your developer would add the MTProto upload code here
+                // Return the direct download URL to the main process via stdout
+                console.log("DOWNLOAD_URL:" + dlResult.download_url);
             }
             run().catch(e => { console.error(e); process.exit(1); });
         `);
 
-        await ctx.reply("Sandbox started! Downloading video... this may take a minute.");
+        await ctx.reply("Sandbox started! Converting video... please wait.");
 
-        // 2. RUN the script inside the sandbox
+        // 2. RUN the script inside the sandbox and capture the URL
         const execution = await sandbox.run("node download.js");
 
-        // Listen for output
-        execution.stdout.on("data", (data) => console.log("Sandbox STDOUT:", data));
-        execution.stderr.on("data", (data) => console.error("Sandbox STDERR:", data));
+        let downloadUrl = null;
+        execution.stdout.on("data", (data) => {
+            const line = data.toString();
+            if (line.includes("DOWNLOAD_URL:")) {
+                downloadUrl = line.split("DOWNLOAD_URL:")[1].trim();
+            }
+        });
 
         // Wait for completion
         await execution.done();
+
+        if (downloadUrl) {
+            await ctx.reply(`Conversion complete! You can download the video here:\n${downloadUrl}`);
+            // Optional: The developer can use MTProto here to upload the file directly if preferred.
+        } else {
+            throw new Error("Could not retrieve download URL from sandbox.");
+        }
 
     } catch (err) {
         console.error(err);
