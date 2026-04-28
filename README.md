@@ -1,53 +1,37 @@
-# Video Download Bot (Direct API)
+# Telegram Video Download Bot (Direct API + MTProto)
 
-This bot allows you to download videos from Dailymotion and Animecube using only direct API calls to `savethevideo.com`. No third-party tools (like yt-dlp or ffmpeg) or external hosting services (like Vercel) are required.
+A high-performance Telegram bot that downloads videos from Dailymotion and Animecube at your preferred resolution, bypassing Telegram's standard 50MB file size limit.
+
+## Key Features
+- **Direct API Integration:** Interacts directly with the `savethevideo.com` v02 API for format extraction and server-side conversion.
+- **MTProto Support:** Uses `gramJS` to upload files up to 2GB, bypassing the standard Bot API limitations.
+- **Interactive UI:** Provides inline buttons for users to select their desired resolution.
+- **OOM Stability:** Uses disk-based streaming to handle large video files without crashing the Node.js process.
+- **Rate-Limit Mitigation:** Implements randomized User-Agent headers and automatic retry logic for 429 errors.
 
 ## How it Works
-The bot is built with a pure API-only architecture:
-1.  **Format Extraction:** It calls `https://api.v02.savethevideo.com/tasks` with `type: info` to get all available video formats.
-2.  **Lowest Quality Selection:** It automatically finds the format with the smallest resolution (lowest width x height).
-3.  **Server-Side Conversion:** It requests a direct download link from the API using `type: download`.
-4.  **Direct Link:** The final MP4 download link is sent directly to the Telegram user.
+1.  **Extraction:** The bot sends the URL to the API to identify all available formats.
+2.  **Selection:** Formats are sorted by resolution (lowest first) and presented via Inline Buttons.
+3.  **Conversion:** The API performs server-side conversion to provide a direct MP4 link.
+4.  **Delivery:** The bot streams the MP4 to a temporary file and uploads it to the user via MTProto.
 
 ## Technical Details
 - **Language:** Node.js
-- **Framework:** [grammY](https://grammy.dev/) for bot logic and [gramJS](https://gram.js.org/) (MTProto) for file uploads.
-- **API:** savethevideo.com v02 Internal API.
-- **Bypassing Limits:** Uses the MTProto protocol to upload files up to 2GB, bypassing the standard 50MB Bot API limit.
+- **Bot Framework:** [grammY](https://grammy.dev/)
+- **MTProto Library:** [gramJS](https://gram.js.org/)
+- **API:** savethevideo.com v02 Internal API
 
-## Running the Bot
-1.  Install dependencies:
+## Setup Instructions
+1.  **Install Dependencies:**
     ```bash
     npm install grammy telegram
     ```
-2.  Run the bot:
+2.  **Configuration:**
+    The following credentials must be configured (currently hardcoded for testing):
+    - `BOT_TOKEN`
+    - `API_ID`
+    - `API_HASH`
+3.  **Run:**
     ```bash
     node bot.js
     ```
-    *(The bot in this repository is pre-configured with your token and is currently running for testing.)*
-
-## Handling Large Files (Telegram 50MB Limit)
-The standard Telegram Bot API has a **50MB upload limit**. If a video is larger than 50MB, this bot provides a **Direct Download Link** which the user can use to download files of any size.
-
-### To send the file itself (Bypassing 50MB):
-If you want the bot to send the actual video file (not just a link) even when it's > 50MB, your developer should use the **MTProto Protocol** instead of the standard Bot API.
-
-#### Example code snippet for MTProto (Node.js):
-```javascript
-const { TelegramClient } = require("telegram");
-const { StringSession } = require("telegram/sessions");
-
-const client = new TelegramClient(new StringSession(""), API_ID, API_HASH);
-
-async function uploadLargeFile(chatId, videoUrl) {
-    const response = await fetch(videoUrl);
-    const buffer = Buffer.from(await response.arrayBuffer());
-
-    await client.sendFile(chatId, {
-        file: buffer,
-        caption: "Here is your large video!",
-        fileName: "video.mp4"
-    });
-}
-```
-*Note: This requires an `API_ID` and `API_HASH` from [my.telegram.org](https://my.telegram.org).*
