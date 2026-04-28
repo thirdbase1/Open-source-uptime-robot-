@@ -1,0 +1,4 @@
+node_modules/
+yt-dlp
+*.log
+video_lowest.mp4
