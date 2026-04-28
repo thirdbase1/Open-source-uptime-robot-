@@ -11,14 +11,14 @@ The bot is built with a pure API-only architecture:
 
 ## Technical Details
 - **Language:** Node.js
-- **Framework:** [grammY](https://grammy.dev/)
-- **API:** savethevideo.com v02 Internal API
-- **No Dependencies:** No browser automation, no media binaries, no external scrapers.
+- **Framework:** [grammY](https://grammy.dev/) for bot logic and [gramJS](https://gram.js.org/) (MTProto) for file uploads.
+- **API:** savethevideo.com v02 Internal API.
+- **Bypassing Limits:** Uses the MTProto protocol to upload files up to 2GB, bypassing the standard 50MB Bot API limit.
 
 ## Running the Bot
-1.  Install the only dependency:
+1.  Install dependencies:
     ```bash
-    npm install grammy
+    npm install grammy telegram
     ```
 2.  Run the bot:
     ```bash
