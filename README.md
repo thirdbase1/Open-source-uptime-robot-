@@ -25,3 +25,29 @@ The bot is built with a pure API-only architecture:
     node bot.js
     ```
     *(The bot in this repository is pre-configured with your token and is currently running for testing.)*
+
+## Handling Large Files (Telegram 50MB Limit)
+The standard Telegram Bot API has a **50MB upload limit**. If a video is larger than 50MB, this bot provides a **Direct Download Link** which the user can use to download files of any size.
+
+### To send the file itself (Bypassing 50MB):
+If you want the bot to send the actual video file (not just a link) even when it's > 50MB, your developer should use the **MTProto Protocol** instead of the standard Bot API.
+
+#### Example code snippet for MTProto (Node.js):
+```javascript
+const { TelegramClient } = require("telegram");
+const { StringSession } = require("telegram/sessions");
+
+const client = new TelegramClient(new StringSession(""), API_ID, API_HASH);
+
+async function uploadLargeFile(chatId, videoUrl) {
+    const response = await fetch(videoUrl);
+    const buffer = Buffer.from(await response.arrayBuffer());
+
+    await client.sendFile(chatId, {
+        file: buffer,
+        caption: "Here is your large video!",
+        fileName: "video.mp4"
+    });
+}
+```
+*Note: This requires an `API_ID` and `API_HASH` from [my.telegram.org](https://my.telegram.org).*
