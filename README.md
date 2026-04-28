@@ -80,20 +80,29 @@ To use libraries like Telethon, Pyrogram, or GramJS, you need:
     *   Persistent storage for the **Session File** (a `.session` file created on first login that stores your authentication).
 4.  **Security:** Since MTProto can perform more actions than the Bot API, keep your `API Hash` and `.session` files private.
 
-## Hosting on Vercel
-You **can** use Vercel to host the *logic* of your Telegram bot (using Webhooks), but it is **not recommended** for a bot that downloads and processes videos for the following reasons:
+## Hosting on Vercel vs. Vercel Sandbox
+There is a big difference between standard **Vercel Functions** and the newer **Vercel Sandbox**.
 
-### 1. Execution Time Limits
-*   **Vercel Hobby Plan:** Maximum 10 seconds execution time.
-*   **Vercel Pro Plan:** Maximum 60-300 seconds.
-*   *Issue:* Downloading a video, even at 288p, and muxing it can easily exceed 10 seconds, causing the function to time out and fail.
+### 1. Standard Vercel Functions (Not Recommended)
+Standard serverless functions are **not suitable** for video downloading because:
+*   **Time Limits:** 10s (Hobby) or 60s (Pro) timeout.
+*   **Disk Space:** Only 512MB of `/tmp` space.
+*   **Environment:** Difficult to run large binaries like `ffmpeg` or `yt-dlp`.
 
-### 2. Disk Space & Binaries
-*   **Ephemeral Storage:** Vercel provides only **512MB** of `/tmp` space. If you download a large video or multiple videos simultaneously, you will run out of space.
-*   **Binaries:** Bundling `yt-dlp` and `ffmpeg` into a Vercel serverless function is difficult and increases the function's cold start time and size (which has a 50MB limit for the compressed function itself).
+### 2. Vercel Sandbox (Recommended)
+[Vercel Sandbox](https://vercel.com/docs/vercel-sandbox) is a newer feature that provides an isolated, safe code execution environment (a full Linux VM). It is **highly suitable** for your project.
 
-### 3. Serverless Nature
-*   Vercel functions are "stateless". They spin up and down. This makes it impossible to host a **Local Telegram Bot API Server** or maintain an **MTProto Session** easily without external persistent storage (like Redis or a Database).
+**Benefits of Vercel Sandbox:**
+*   **Extended Runtime:** Up to **45 minutes** (Hobby) or **5 hours** (Pro/Enterprise).
+*   **Ample Disk Space:** Comes with **32 GB** of ephemeral NVMe storage.
+*   **Full VM Access:** You can run any command (like `yt-dlp` and `ffmpeg`) just like a regular server.
+*   **Persistent Sessions:** You can use "Persistent Sandboxes" to keep your MTProto `.session` files alive.
+
+**How to use it for your Bot:**
+- Host your main Bot logic on a standard Vercel Function (Webhook).
+- When a user requests a video, your Bot calls the [Vercel Sandbox SDK](https://vercel.com/docs/vercel-sandbox/sdk-reference) to spin up a sandbox.
+- The Sandbox runs the `yt-dlp` command, downloads the video, and sends it to Telegram (via MTProto or Local API).
+- Once done, the Sandbox can be stopped.
 
 ### Recommended Alternatives
 If you need to download and send videos, consider these "Platform as a Service" (PaaS) providers that allow long-running processes:
