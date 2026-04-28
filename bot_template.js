@@ -7,7 +7,7 @@
  */
 
 const { Bot } = require("grammy");
-const { createSandbox } = require("@vercel/sandbox");
+const { Sandbox } = require("@vercel/sandbox");
 
 const bot = new Bot(process.env.BOT_TOKEN);
 
@@ -23,12 +23,12 @@ bot.on("message:text", async (ctx) => {
     await ctx.reply("Analyzing video... identifying lowest format...");
 
     try {
-        const sandbox = await createSandbox({
-            template: "node"
+        const sandbox = await Sandbox.create({
+            runtime: "node22"
         });
 
         // 1. Create the download script file in the sandbox
-        await sandbox.writeFile("download.js", `
+        await sandbox.fs.writeFile("download.js", `
             async function run() {
                 const url = ${JSON.stringify(url)};
 
@@ -86,10 +86,10 @@ bot.on("message:text", async (ctx) => {
         await ctx.reply("Sandbox started! Converting video... please wait.");
 
         // 2. RUN the script inside the sandbox and capture the URL
-        const execution = await sandbox.run("node download.js");
+        const cmd = await sandbox.runCommand("node download.js");
 
         let downloadUrl = null;
-        execution.stdout.on("data", (data) => {
+        cmd.stdout.on("data", (data) => {
             const line = data.toString();
             if (line.includes("DOWNLOAD_URL:")) {
                 downloadUrl = line.split("DOWNLOAD_URL:")[1].trim();
@@ -97,7 +97,7 @@ bot.on("message:text", async (ctx) => {
         });
 
         // Wait for completion
-        await execution.done();
+        await cmd.done();
 
         if (downloadUrl) {
             await ctx.reply(`Conversion complete! You can download the video here:\n${downloadUrl}`);

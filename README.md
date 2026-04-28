@@ -121,3 +121,9 @@ If you need to download and send videos, consider these "Platform as a Service" 
 *   **Railway.app** (Very easy to use, supports Docker and long tasks).
 *   **Render.com** (Supports Web Services with persistent disks).
 *   **Hetzner / DigitalOcean / Linode** (Standard VPS - best for hosting the Local Bot API Server).
+
+## Running for Testing
+While you cannot host a 24/7 production bot here, you **can** run the bot temporarily in a development sandbox (like this one) for testing.
+1.  **Installation:** `npm install`
+2.  **Run:** `BOT_TOKEN=your_token node bot_template.js`
+*Note: The bot will stop as soon as the sandbox session ends.*
