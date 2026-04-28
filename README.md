@@ -57,3 +57,25 @@ If you cannot change your infrastructure:
   ffmpeg -i video_lowest.mp4 -vcodec libx264 -crf 28 compressed.mp4
   ```
 - **Splitting:** Use `yt-dlp` or `ffmpeg` to split the video into smaller parts (e.g., Part 1, Part 2) each under 50MB.
+
+## Technical Requirements for Large File Support
+
+### For Local Telegram Bot API Server
+To host the server yourself, you need:
+1.  **Hardware:** A VPS or local server with at least:
+    *   **CPU:** 1 vCPU (minimum).
+    *   **RAM:** 512MB - 1GB (depending on the volume of files).
+    *   **Storage:** Sufficient disk space to cache the files during upload/download (at least 2x the size of your largest video).
+2.  **OS:** Linux (Ubuntu/Debian recommended) or Docker installed.
+3.  **Dependencies:** `g++`, `cmake`, `gperf`, `libssl-dev`, `zlib1g-dev` (if building from source) or simply `Docker`.
+4.  **Network:** A public IP and port `443` or `8081` open to receive requests from your bot.
+
+### For MTProto Integration
+To use libraries like Telethon, Pyrogram, or GramJS, you need:
+1.  **Credentials:**
+    *   **API ID** and **API Hash**: You must obtain these from [my.telegram.org](https://my.telegram.org) by creating a "Development Application".
+2.  **Bot Token:** Your standard `@BotFather` token.
+3.  **Environment:**
+    *   Python 3.x (for Telethon/Pyrogram) or Node.js (for GramJS).
+    *   Persistent storage for the **Session File** (a `.session` file created on first login that stores your authentication).
+4.  **Security:** Since MTProto can perform more actions than the Bot API, keep your `API Hash` and `.session` files private.
