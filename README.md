@@ -79,3 +79,24 @@ To use libraries like Telethon, Pyrogram, or GramJS, you need:
     *   Python 3.x (for Telethon/Pyrogram) or Node.js (for GramJS).
     *   Persistent storage for the **Session File** (a `.session` file created on first login that stores your authentication).
 4.  **Security:** Since MTProto can perform more actions than the Bot API, keep your `API Hash` and `.session` files private.
+
+## Hosting on Vercel
+You **can** use Vercel to host the *logic* of your Telegram bot (using Webhooks), but it is **not recommended** for a bot that downloads and processes videos for the following reasons:
+
+### 1. Execution Time Limits
+*   **Vercel Hobby Plan:** Maximum 10 seconds execution time.
+*   **Vercel Pro Plan:** Maximum 60-300 seconds.
+*   *Issue:* Downloading a video, even at 288p, and muxing it can easily exceed 10 seconds, causing the function to time out and fail.
+
+### 2. Disk Space & Binaries
+*   **Ephemeral Storage:** Vercel provides only **512MB** of `/tmp` space. If you download a large video or multiple videos simultaneously, you will run out of space.
+*   **Binaries:** Bundling `yt-dlp` and `ffmpeg` into a Vercel serverless function is difficult and increases the function's cold start time and size (which has a 50MB limit for the compressed function itself).
+
+### 3. Serverless Nature
+*   Vercel functions are "stateless". They spin up and down. This makes it impossible to host a **Local Telegram Bot API Server** or maintain an **MTProto Session** easily without external persistent storage (like Redis or a Database).
+
+### Recommended Alternatives
+If you need to download and send videos, consider these "Platform as a Service" (PaaS) providers that allow long-running processes:
+*   **Railway.app** (Very easy to use, supports Docker and long tasks).
+*   **Render.com** (Supports Web Services with persistent disks).
+*   **Hetzner / DigitalOcean / Linode** (Standard VPS - best for hosting the Local Bot API Server).
